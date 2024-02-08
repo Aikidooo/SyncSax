@@ -2,11 +2,12 @@ from datetime import datetime
 import json
 import socket
 
-HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
+HOST = ""  # Standard loopback interface address (localhost)
 PORT = 12345
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind((HOST, PORT))
+sock.listen()
 
 recipients = []
 
@@ -15,6 +16,7 @@ def main():
 
     while True:
         data = recv()
+        print(recipients)
         if not data:
             continue
         shoutout(data)
@@ -33,11 +35,17 @@ def shoutout(call):
 
 
 def recv():
-    data, addr = sock.recvfrom(1024)
+    conn, addr = sock.accept()
 
     print(f"Received data from {addr}")
 
-    msg = data.decode("utf-8")
+    try:
+        data = conn.recv(1024)
+        msg = data.decode("utf-8")
+    except socket.error:
+        return
+    finally:
+        conn.close()
 
     if msg == "register":
         global recipients

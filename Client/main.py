@@ -1,12 +1,13 @@
 import tkinter as tk
 import json
 import socket
+import os
 
-HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
-SERVER = "sch8ill.de"
+HOST = socket.gethostname()
+SERVER = "google.com"
 PORT = 12345
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind((HOST, PORT))
 
 with open("videos.json") as f:
@@ -21,9 +22,10 @@ def call(video: tk.StringVar):
     video = video.get()
     pack = {
         "initiator": socket.gethostname(),
-        "video": video
+        "video": videos[video]
     }
-    sock.sendto(json.dumps(pack).encode(), (SERVER, PORT))
+    sock.connect((SERVER, PORT))
+    sock.sendall(json.dumps(pack).encode())
 
 def recv():
     """Wait for incoming instructions by the Server"""
@@ -33,7 +35,10 @@ def recv():
 def main():
     app = tk.Tk()
     app.title("SyncSax")
-    app.attributes("-zoomed", True)
+    if os.name == "nt":
+        app.state("zoomed")
+    else:
+        app.attributes("-zoomed", True)
 
     
     options = list(videos.keys())
