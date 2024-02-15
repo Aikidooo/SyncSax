@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+
 import json
 import socket
 import threading
@@ -12,7 +13,7 @@ SERVER = "localhost"
 SND_PORT = 12345
 REC_PORT = 12346
 
-app = tk.Tk()
+root = tk.Tk()
 
 with open("videos.json") as f:
     videos: dict = json.load(f)
@@ -55,13 +56,15 @@ def recv():
         conn.close()
 
 def open_popup(data):
-   top= tk.Toplevel(app)
-   top.geometry("750x250")
-   top.title("Child Window")
-   tk.Label(top, text= "Hello World!", font=('Mistral 18 bold')).place(x=150,y=80)
+
+    res = messagebox.askquestion("Aufruf erhalten", f"{data['initiator']} möchte folgendes Video starten: {data['video']} \nMöchtest du beitreten?")
+    if res == "yes":
+       print("yes")
+    else:
+       print("no")
 
 def main():
-    app.title("SyncSax")
+    root.title("SyncSax")
     #if os.name == "nt":
     #    app.state("zoomed")
     #else:
@@ -73,18 +76,22 @@ def main():
     selected = tk.StringVar()
     selected.set(options[0])
 
-    drop = tk.OptionMenu(app, selected, *options)
+    drop = tk.OptionMenu(root, selected, *options)
     drop.pack()
-    btn = tk.Button(app, text = "Start", command = lambda: call(selected))
+    btn = tk.Button(root, text = "Start", command = lambda: call(selected))
     btn.pack()
   
-    label = tk.Label(app, text = " ")
+    label = tk.Label(root, text = " ")
     label.pack() 
+
+    frame = tk.Frame(root)
+    frame.pack()
 
     listener_thread = threading.Thread(target=recv, daemon=True)
     listener_thread.start()
 
-    app.mainloop()
+    
+    root.mainloop()
     print("test")
 
 if __name__ == "__main__":
