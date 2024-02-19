@@ -4,7 +4,10 @@ from tkinter import messagebox
 import json
 import socket
 import threading
+from pathlib import Path
 import os
+from pytube import YouTube
+from moviepy.editor import VideoFileClip
 
 # Client
 
@@ -12,6 +15,9 @@ HOST = "127.0.0.1"
 SERVER = "localhost"
 SND_PORT = 12345
 REC_PORT = 12346
+
+VID_DIR = Path.home() / "videos" / "SyncSax"
+VID_LENGTH = 600
 
 root = tk.Tk()
 
@@ -55,11 +61,29 @@ def recv():
         open_popup(json.loads(data.decode()))
         conn.close()
 
+def vid_file_exists(name) -> bool:
+    if not os.path.isdir(VID_DIR):
+        os.mkdir(VID_DIR)
+        return False
+    return os.path.exists(VID_DIR / f"{name}.mp4")
+
+def download_vid(id: str):
+    print(f"Downloading video {id}")
+    tmp_file = YouTube(f"https://www.youtube.com/watch?v={id}").streams.get_highest_resolution().download()
+    video = VideoFileClip(tmp_file).subclip(0, VID_LENGTH)
+    video.write_videofile(VID_DIR / f"{id}.mp4")
+    os.remove(tmp_file)
+    print("Done")
+
 def open_popup(data):
 
     res = messagebox.askquestion("Aufruf erhalten", f"{data['initiator']} möchte folgendes Video starten: {data['video']} \nMöchtest du beitreten?")
     if res == "yes":
-       print("yes")
+        print("Accepted call")
+        if vid_file_exists(data["video"]):
+            print("Using local videofile")
+        else:
+            download_vid(data["video"])
     else:
        print("no")
 
